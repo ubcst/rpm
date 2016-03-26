@@ -16,24 +16,24 @@ unsigned long lastmillis = 0;
 // Variables and constants for the engine sensor
 const int ENGINE_GEAR_TEETH = 1;  // Number of teeth on the engine's gear
 const double ENGINE_FREQ = CHECKS_PER_SECOND * SECONDS_PER_MINUTE / ENGINE_GEAR_TEETH;
-const int engineSensorPin = 2;
+const int ENGINE_SENSOR_PIN = 2;
 volatile int engineGearCount = 0;
 double engineRpm = 0;
 
 // Variables and constants for the wheel sensor
 const int WHEEL_GEAR_TEETH = 24; // Number of teeth on the wheel's gear
 const double WHEEL_FREQ = CHECKS_PER_SECOND * SECONDS_PER_MINUTE / WHEEL_GEAR_TEETH;
-const int wheelSensorPin = 3;
+const int WHEEL_SENSOR_PIN = 3;
 volatile int wheelGearCount = 0;
 double wheelRpm = 0;
 
 // Variables and constants for the clutch pin
-const int clutchPin = 18;
+const int CLUTCH_PIN = 18;
 volatile int clutchState = LOW;
 
 // Output pin for indicating when the engine and wheel RPM values are within a
 // certain percentage of each other
-const int outputPin = 22;
+const int OUTPUT_PIN = 22;
 
 /**
  * The logic to setup all the input and output pins
@@ -42,13 +42,13 @@ void setup() {
   Serial.begin(9600);
   
   // Set the pin modes of the pins
-  pinMode(engineSensorPin, INPUT);
-  pinMode(wheelSensorPin, INPUT);
-  pinMode(clutchPin, INPUT);
-  pinMode(outputPin, OUTPUT);
+  pinMode(ENGINE_SENSOR_PIN, INPUT);
+  pinMode(WHEEL_SENSOR_PIN, INPUT);
+  pinMode(CLUTCH_PIN, INPUT);
+  pinMode(OUTPUT_PIN, OUTPUT);
 
   // Attach the interrupts
-  attachInterrupt(digitalPinToInterrupt(clutchPin), clutchRead, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(CLUTCH_PIN), clutchRead, CHANGE);
   attachSensorInterrupts();
 }
 
@@ -63,8 +63,8 @@ void loop() {
     if (millis() - lastmillis >= CHECK_INTERVAL) {
       Serial.println("500 ms has passed");
       // Disable interrupts while performing check
-      detachInterrupt(engineSensorPin);
-      detachInterrupt(wheelSensorPin);
+      detachInterrupt(ENGINE_SENSOR_PIN);
+      detachInterrupt(WHEEL_SENSOR_PIN);
 
       // Convert frequencies to RPM
       engineRpm = engineGearCount * ENGINE_FREQ;
@@ -73,7 +73,7 @@ void loop() {
       // If engine RPM is within 5% of wheel RPM, set the output pin to HIGH
       if( abs(engineRpm - wheelRpm) < ACCEPTABLE_RPM_PERCENTAGE_DIFF ) {
         Serial.println("RPMs are within acceptable percentage");
-        //digitalWrite(outputPin, HIGH);
+        //digitalWrite(OUTPUT_PIN, HIGH);
         PORTA |= _BV(PA0);
 
         while (clutchState == HIGH){
@@ -83,7 +83,7 @@ void loop() {
         Serial.println("Out of while loop");
 
         // Once clutch is set back to LOW, we set the output pin to LOW
-        //digitalWrite(outputPin, LOW);
+        //digitalWrite(OUTPUT_PIN, LOW);
         PORTA &= ~_BV(PA0);
       }
 
@@ -102,8 +102,8 @@ void loop() {
  * Function to attach the interrupts
  */
 void attachSensorInterrupts() {
-  attachInterrupt(digitalPinToInterrupt(engineSensorPin), engineSensorRead, FALLING);
-  attachInterrupt(digitalPinToInterrupt(wheelSensorPin), wheelSensorRead, FALLING);
+  attachInterrupt(digitalPinToInterrupt(ENGINE_SENSOR_PIN), engineSensorRead, FALLING);
+  attachInterrupt(digitalPinToInterrupt(WHEEL_SENSOR_PIN), wheelSensorRead, FALLING);
 }
 
 /**
@@ -124,7 +124,7 @@ void wheelSensorRead() {
  * Interrupt to read the current state of the clutch pin
  */
 void clutchRead() {
-  //clutchState = digitalRead(clutchPin);
+  //clutchState = digitalRead(CLUTCH_PIN);
   clutchState ^= _BV(PD3) >> 3;
   Serial.print("Clutch state changed: ");
   Serial.print(clutchState);
