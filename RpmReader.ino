@@ -73,7 +73,8 @@ void loop() {
       // If engine RPM is within 5% of wheel RPM, set the output pin to HIGH
       if( abs(engineRpm - wheelRpm) < ACCEPTABLE_RPM_PERCENTAGE_DIFF ) {
         Serial.println("RPMs are within acceptable percentage");
-        digitalWrite(outputPin, HIGH);
+        //digitalWrite(outputPin, HIGH);
+        PORTA |= _BV(PA0);
 
         while (clutchState == HIGH){
           // Block until clutch is set to LOW
@@ -82,7 +83,8 @@ void loop() {
         Serial.println("Out of while loop");
 
         // Once clutch is set back to LOW, we set the output pin to LOW
-        digitalWrite(outputPin, LOW);
+        //digitalWrite(outputPin, LOW);
+        PORTA &= ~_BV(PA0);
       }
 
       // Reset the variables
@@ -122,7 +124,8 @@ void wheelSensorRead() {
  * Interrupt to read the current state of the clutch pin
  */
 void clutchRead() {
-  clutchState = digitalRead(clutchPin);
+  //clutchState = digitalRead(clutchPin);
+  clutchState ^= _BV(PD3) >> 3;
   Serial.print("Clutch state changed: ");
   Serial.print(clutchState);
   Serial.print("\r\n");
